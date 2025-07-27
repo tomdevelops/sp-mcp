@@ -1,8 +1,8 @@
 # SP-MCP
 
-Bridge between the amazing [Super Productivity](https://github.com/johannesjo/super-productivity/) app and MCP (Model Context Protocol) servers for Claude Desktop integration.
+Bridge between the amazing [Super Productivity](https://github.com/johannesjo/super-productivity/) app and MCP (Model Context Protocol) servers for AI assistant integration.
 
-This MCP and plugin allows Claude Desktop to directly interact with Super Productivity through the MCP protocol. Create update,tasks, manage projects and tags, and get information from Super Productivity.
+This MCP server and plugin allows AI assistants like Claude Desktop and many more to directly interact with Super Productivity through the MCP protocol. Create, update tasks, manage projects and tags, and get information from Super Productivity.
 
 Make sure to backup your Super Productivity before using in case of data loss. I've provided a plugin.zip for convenience but feel free to make your own from the files.
 
@@ -16,28 +16,36 @@ https://github.com/user-attachments/assets/cc118173-023f-48cb-8213-427027e475af
 ## Requirements
 
 - Super Productivity 14.0.0 or higher
-- Claude Desktop
+- MCP-compatible AI assistant (Claude Desktop, Open Code, etc.)
 - Python 3.8 or higher
 
 ## Installation
 
 ### Automatic Setup
 
-**Windows:**
+**Windows UNTESTED:**
 1. Clone this repo
-2. Run `setup.bat`
-3. Follow the prompts
+2. Navigate to the `scripts` folder
+3. Run `setup.bat`
+4. Choose which MCP clients to configure (Claude Desktop, Open Code)
+5. Follow the prompts
 
-**Linux/Mac UNTESTED:**
+**Linux/Mac:**
 1. Clone this repo
-2. Run `chmod +x setup.sh && ./setup.sh`
-3. Follow the prompts
+2. Navigate to the `scripts` folder
+3. Run `chmod +x setup.sh && ./setup.sh`
+4. Choose which MCP clients to configure (Claude Desktop, Open Code)
+5. Follow the prompts
 
-The setup scripts will preserve any existing MCP servers in your Claude Desktop configuration.
+The setup scripts will:
+- Install Python dependencies
+- Set up the MCP server in the appropriate data directory
+- Preserve any existing MCP server configurations
+- Configure your chosen AI assistants (Claude Desktop, Open Code)
 
-You'll still have to install the plugin.zip manually in Super Productivity in settings->plugins.
+You'll still need to install the plugin manually in Super Productivity (Settings → Plugins → Upload Plugin → select `sp-mcp-bridge-v*.zip`).
 
-Once that's done, restart claude (and Super Prod for good measure) and you should be able to access your files
+Once that's done, restart your configured AI assistants and Super Productivity, and you should be able to interact with your tasks.
 
 ### Manual Setup
 
@@ -52,7 +60,9 @@ Once that's done, restart claude (and Super Prod for good measure) and you shoul
    - Linux: `~/.local/share/super-productivity-mcp/`
    - macOS: `~/Library/Application Support/super-productivity-mcp/`
 
-3. **Configure Claude Desktop:**
+3. **Configure AI Assistants:**
+
+   **Claude Desktop:**
    Edit Claude's config file and add to `mcpServers`:
    ```json
    "super-productivity": {
@@ -61,12 +71,57 @@ Once that's done, restart claude (and Super Prod for good measure) and you shoul
    }
    ```
 
+   **Open Code:**
+   Edit Open Code's config file and add to `mcp`:
+   ```json
+   "super-productivity": {
+     "type": "local",
+     "command": ["python3", "/path/to/mcp_server.py"],
+     "enabled": true
+   }
+   ```
+
 4. **Install the plugin:**
    - Open Super Productivity → Settings → Plugins
    - Click "Upload Plugin"
-   - Select `plugin.js`
+   - Select `sp-mcp-bridge-v*.zip`
 
-5. **Restart Claude Desktop**
+5. **Restart your AI assistant (Claude Desktop, Open Code, etc.)**
+
+## Uninstallation
+
+### Automatic Uninstall
+
+**Windows:**
+1. Navigate to the `scripts` folder
+2. Run `uninstall.bat`
+3. Follow the prompts to remove configurations and data
+
+**Linux/Mac:**
+1. Navigate to the `scripts` folder
+2. Run `chmod +x uninstall.sh && ./uninstall.sh`
+3. Follow the prompts to remove configurations and data
+
+The uninstall scripts will:
+- Remove MCP server configurations from Claude Desktop and Open Code
+- Create backups of existing configurations before removal
+- Optionally remove MCP data directories
+- Keep the project files (you can delete them manually if desired)
+
+### Manual Uninstall
+
+1. **Remove MCP configurations:**
+   - **Claude Desktop:** Remove the `"super-productivity"` entry from `mcpServers` in the config file
+   - **Open Code:** Remove the `"super-productivity"` entry from `mcp` in the config file
+
+2. **Remove data directories:**
+   - Windows: `%APPDATA%\super-productivity-mcp\`
+   - Linux: `~/.local/share/super-productivity-mcp/`
+   - macOS: `~/Library/Application Support/super-productivity-mcp/`
+
+3. **Remove plugin from Super Productivity:**
+   - Go to Settings → Plugins
+   - Find the SP-MCP Bridge plugin and remove it
 
 ## Usage
 
@@ -116,3 +171,13 @@ Commands are exchanged through `plugin_commands/` and `plugin_responses/` direct
 - Verify both plugin and MCP server are running
 - Check file permissions on communication directories
 - Check `mcp_server.log` in the data directory
+
+## Building
+
+To build the zip plugin package:
+
+```bash
+bash scripts/build-plugin.sh
+```
+
+This will create a zip file named `{plugin-id}-v{version}.zip` in the project root, containing all the necessary plugin files.
