@@ -8,7 +8,7 @@ class MCPBridgePlugin {
     this.isInitialized = false;
     this.commandQueue = [];
     this.lastNoCommandsLog = 0;
-    
+
     // Configuration
     this.config = {
       commandCheckIntervalMs: 2000, // Check for commands every 2 seconds (configurable)
@@ -34,9 +34,9 @@ class MCPBridgePlugin {
         script: `
           const fs = require('fs');
           const path = require('path');
-          
+
           const configFile = args[0];
-          
+
           try {
             if (fs.existsSync(configFile)) {
               const configData = fs.readFileSync(configFile, 'utf8');
@@ -57,7 +57,7 @@ class MCPBridgePlugin {
         args: [this.config.configFile],
         timeout: 5000
       });
-      
+
       if (result && result.success && result.result && result.result.success) {
         const savedConfig = result.result.config;
         this.config.commandCheckIntervalMs = savedConfig.commandCheckIntervalMs || 2000;
@@ -74,14 +74,14 @@ class MCPBridgePlugin {
       const configData = {
         commandCheckIntervalMs: this.config.commandCheckIntervalMs
       };
-      
+
       const result = await PluginAPI.executeNodeScript({
         script: `
           const fs = require('fs');
-          
+
           const configFile = args[0];
           const configData = args[1];
-          
+
           try {
             fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));
             return { success: true };
@@ -92,7 +92,7 @@ class MCPBridgePlugin {
         args: [this.config.configFile, configData],
         timeout: 5000
       });
-      
+
       if (result && result.success && result.result && result.result.success) {
         return true;
       }
@@ -107,10 +107,10 @@ class MCPBridgePlugin {
     if (newIntervalMs >= 1000 && newIntervalMs <= 60000) {
       this.config.commandCheckIntervalMs = newIntervalMs;
       await this.saveConfig();
-      
+
       // Restart command processing with new interval
       this.startCommandProcessing();
-      
+
       this.updateUI({
         config: { pollingFrequency: frequencySeconds },
         log: { message: `Polling updated to ${frequencySeconds}s`, type: 'info' }
@@ -122,30 +122,30 @@ class MCPBridgePlugin {
 
   async init() {
     await this.log('MCP Bridge Plugin initializing...');
-    
+
     try {
       // Find the MCP server and set up communication directories
       await this.setupMCPCommunication();
-      
+
       // Set config file path and load configuration (non-blocking)
       this.config.configFile = this.mcpServerPath + '/mcp_bridge_config.json';
-      this.loadConfig().catch(e => this.log(`Config loading failed: ${e.message}`));
-      
+      this.loadConfig().catch((e) => this.log(`Config loading failed: ${e.message}`));
+
       // Start the command processing loop
       this.startCommandProcessing();
-      
+
       // Register event hooks for Super Productivity changes
       this.registerHooks();
-      
+
       // Register UI elements
       this.registerUI();
-      
+
       this.isInitialized = true;
       await this.log('MCP Bridge Plugin initialized successfully!');
-      
+
       // Log success (skip notifications for now)
       console.log('🔗 MCP Bridge connected! Ready for commands.');
-      
+
       // Send initialization status to UI
       this.updateUI({
         status: { type: 'connected', message: '✅ Connected and ready' },
@@ -174,37 +174,39 @@ class MCPBridgePlugin {
           try {
             const fs = require('fs');
             const path = require('path');
-            const os = require('os');
-            
+            const isWindows = false;
+
             let dataDir;
-            if (os.platform() === 'win32') {
-              dataDir = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+            if (isWindows) {
+              dataDir = path.join('~', 'AppData', 'Roaming');
             } else {
-              dataDir = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share');
+              dataDir = path.join('~', '.local', 'share');
             }
-            
+
             const mcpDir = path.join(dataDir, 'super-productivity-mcp');
             const commandDir = path.join(mcpDir, 'plugin_commands');
             const responseDir = path.join(mcpDir, 'plugin_responses');
-            
+
             if (!fs.existsSync(mcpDir)) {
               fs.mkdirSync(mcpDir, { recursive: true });
             }
+
             if (!fs.existsSync(commandDir)) {
               fs.mkdirSync(commandDir, { recursive: true });
             }
+
             if (!fs.existsSync(responseDir)) {
               fs.mkdirSync(responseDir, { recursive: true });
             }
-            
+
             return {
               success: true,
               mcpServerPath: mcpDir,
               commandDir: commandDir,
               responseDir: responseDir,
-              platform: os.platform()
+              platform: 'linux',
             };
-            
+
           } catch (error) {
             return {
               success: false,
@@ -215,12 +217,12 @@ class MCPBridgePlugin {
         args: [],
         timeout: 10000
       });
-      
+
       let scriptResult = result;
       if (result && result.success && result.result) {
         scriptResult = result.result;
       }
-      
+
       if (scriptResult && scriptResult.success) {
         this.mcpServerPath = scriptResult.mcpServerPath;
         this.config.mcpCommandDir = scriptResult.commandDir;
@@ -232,11 +234,10 @@ class MCPBridgePlugin {
     } catch (e) {
       await this.log(`AppData setup failed: ${e.message}`);
     }
-    
+
     try {
       const fallbackResult = await PluginAPI.executeNodeScript({
         script: `
-          const os = require('os');
           const path = require('path');
           
           let baseDir;
@@ -245,7 +246,7 @@ class MCPBridgePlugin {
           } else {
             baseDir = path.join(os.homedir(), '.local', 'share', 'super-productivity-mcp');
           }
-          
+
           return {
             success: true,
             mcpServerPath: baseDir,
@@ -256,7 +257,7 @@ class MCPBridgePlugin {
         args: [],
         timeout: 5000
       });
-      
+
       if (fallbackResult && fallbackResult.success && fallbackResult.result) {
         this.mcpServerPath = fallbackResult.result.mcpServerPath;
         this.config.mcpCommandDir = fallbackResult.result.commandDir;
@@ -266,11 +267,10 @@ class MCPBridgePlugin {
     } catch (fallbackError) {
       await this.log(`Fallback setup failed: ${fallbackError.message}`);
     }
-    
+
     // If we get here, everything failed
     throw new Error('Could not set up MCP communication directories');
   }
-
 
   /**
    * Start the command processing loop
@@ -301,49 +301,48 @@ class MCPBridgePlugin {
     }
 
     try {
-
       const result = await PluginAPI.executeNodeScript({
         script: `
           const fs = require('fs');
           const path = require('path');
-          
+
           const commandDir = args[0];
           const lastProcessed = args[1];
-          
+
           // Always return a result with the expected structure
           try {
             // Log what we're working with
             console.log('Processing commands in:', commandDir);
             console.log('Last processed timestamp:', lastProcessed);
-            
+
             if (!fs.existsSync(commandDir)) {
               console.log('Command directory does not exist');
               return { success: true, commands: [], message: 'Directory not found' };
             }
-            
+
             const files = fs.readdirSync(commandDir);
             console.log('Found files:', files);
-            
+
             const commandFiles = files.filter(f => f.endsWith('.json'));
             console.log('JSON files:', commandFiles);
-            
+
             // Find new command files
             const newCommands = [];
             for (const file of commandFiles) {
               const filePath = path.join(commandDir, file);
               console.log('Checking file:', filePath);
-              
+
               try {
                 const stats = fs.statSync(filePath);
                 console.log('File mtime:', stats.mtime.getTime(), 'vs lastProcessed:', lastProcessed);
-                
+
                 if (stats.mtime.getTime() > lastProcessed) {
                   console.log('Processing new file:', file);
-                  
+
                   try {
                     const content = fs.readFileSync(filePath, 'utf8');
                     const command = JSON.parse(content);
-                    
+
                     newCommands.push({
                       filename: file,
                       path: filePath,
@@ -360,12 +359,12 @@ class MCPBridgePlugin {
                 console.log('Stat error for file', file, ':', statError.message);
               }
             }
-            
+
             // Sort by timestamp
             newCommands.sort((a, b) => a.timestamp - b.timestamp);
-            
+
             console.log('Returning', newCommands.length, 'new commands');
-            
+
             const finalResult = {
               success: true,
               commands: newCommands,
@@ -373,14 +372,14 @@ class MCPBridgePlugin {
               jsonFiles: commandFiles.length,
               processedFiles: newCommands.length
             };
-            
+
             console.log('Final result:', JSON.stringify(finalResult, null, 2));
             return finalResult;
-            
+
           } catch (error) {
             console.log('Error in command processing:', error.message);
-            return { 
-              success: false, 
+            return {
+              success: false,
               error: error.message,
               commands: [] // Always include commands array
             };
@@ -395,30 +394,30 @@ class MCPBridgePlugin {
         await this.log('executeNodeScript returned null/undefined result');
         return;
       }
-      
+
       if (!result.hasOwnProperty('success')) {
         await this.log('executeNodeScript result missing success property');
         return;
       }
-      
+
       if (!result.success) {
         await this.log(`Command processing failed: ${result.error || 'Unknown error'}`);
         return;
       }
-      
+
       // The result from executeNodeScript is wrapped in a 'result' property
       const commandResult = result.result;
-      
+
       if (!commandResult || !commandResult.hasOwnProperty('commands')) {
         await this.log('executeNodeScript result.result missing commands property');
         return;
       }
-      
+
       if (!Array.isArray(commandResult.commands)) {
         await this.log('executeNodeScript result.result.commands is not an array');
         return;
       }
-      
+
       if (commandResult.commands.length > 0) {
         for (const commandInfo of commandResult.commands) {
           try {
@@ -429,67 +428,61 @@ class MCPBridgePlugin {
           }
         }
       }
-      
     } catch (error) {
       await this.log(`Error in processNewCommands: ${error.message}`);
       this.stats.errors++;
     }
   }
-  
 
   async executeCommand(commandInfo) {
     const { command, filename, path: commandPath } = commandInfo;
-    
+
     try {
       let result;
       const startTime = Date.now();
-      
+
       // Execute the appropriate API call based on command.action
       switch (command.action) {
         // Task operations
         case 'getTasks':
           result = await PluginAPI.getTasks();
           break;
-          
+
         case 'getArchivedTasks':
           result = await PluginAPI.getArchivedTasks();
           break;
-          
+
         case 'getCurrentContextTasks':
           result = await PluginAPI.getCurrentContextTasks();
           break;
-          
+
         case 'addTask':
           // Check if this is a subtask with SP syntax (@, #, +)
           if (command.data.parentId && (command.data.title.includes('@') || command.data.title.includes('#') || command.data.title.includes('+'))) {
             await this.log(`Subtask with syntax detected: ${command.data.title}`);
-            
+
             // Step 1: Create subtask without SP syntax
-            const titleWithoutSyntax = command.data.title
-              .replace(/@\w+/g, '')
-              .replace(/#\w+/g, '')
-              .replace(/\+\w+/g, '')
-              .trim();
+            const titleWithoutSyntax = command.data.title.replace(/@\w+/g, '').replace(/#\w+/g, '').replace(/\+\w+/g, '').trim();
             const taskData = { ...command.data, title: titleWithoutSyntax };
-            
+
             await this.log(`Creating subtask without syntax: ${titleWithoutSyntax}`);
             const taskId = await PluginAPI.addTask(taskData);
-            
+
             // Step 2: Update with original title to trigger syntax parsing
             await this.log(`Updating subtask with original title: ${command.data.title}`);
             await PluginAPI.updateTask(taskId, { title: command.data.title });
-            
+
             result = taskId;
           } else {
             // Regular task creation
             result = await PluginAPI.addTask(command.data);
           }
           break;
-          
+
         case 'updateTask':
           result = await PluginAPI.updateTask(command.taskId, command.data);
           break;
-          
+
         case 'deleteTask':
         case 'removeTask':
           // Task deletion is not supported via Plugin API
@@ -554,47 +547,48 @@ class MCPBridgePlugin {
           const tasksForTagRemoval = await PluginAPI.getTasks();
           const taskForTagRemoval = tasksForTagRemoval.find(t => t.id === command.taskId);
           if (taskForTagRemoval) {
-            const newTagIds = taskForTagRemoval.tagIds.filter(id => id !== command.tagId);
-            result = await PluginAPI.updateTask(command.taskId, { tagIds: newTagIds });
+            });
           } else {
             result = { error: 'Task not found' };
           }
           break;
-          
+
         case 'reorderTasks':
-          result = await PluginAPI.reorderTasks ? await PluginAPI.reorderTasks(command.taskIds, command.contextId, command.contextType) : 'reorderTasks not available';
+          result = (await PluginAPI.reorderTasks) ? await PluginAPI.reorderTasks(command.taskIds, command.contextId, command.contextType) : 'reorderTasks not available';
           break;
 
         // Project operations
         case 'getAllProjects':
           result = await PluginAPI.getAllProjects();
           break;
-          
+
         case 'addProject':
           result = await PluginAPI.addProject(command.data);
           break;
-          
+
         case 'updateProject':
           result = await PluginAPI.updateProject(command.projectId, command.data);
           break;
-          
+
         case 'deleteProject':
-          result = { error: 'Project deletion not supported via Plugin API. Use updateProject to archive instead.' };
+          result = {
+            error: 'Project deletion not supported via Plugin API. Use updateProject to archive instead.'
+          };
           break;
 
         // Tag operations
         case 'getAllTags':
           result = await PluginAPI.getAllTags();
           break;
-          
+
         case 'addTag':
           result = await PluginAPI.addTag(command.data);
           break;
-          
+
         case 'updateTag':
           result = await PluginAPI.updateTag(command.tagId, command.data);
           break;
-          
+
         case 'deleteTag':
           result = { error: 'Tag deletion not supported via Plugin API.' };
           break;
@@ -612,7 +606,7 @@ class MCPBridgePlugin {
             result = { success: true, fallback: true };
           }
           break;
-          
+
         case 'notify':
           try {
             result = await PluginAPI.notify(command.message);
@@ -622,31 +616,22 @@ class MCPBridgePlugin {
             result = { success: true, fallback: true };
           }
           break;
-          
+
         case 'openDialog':
           result = await PluginAPI.openDialog(command.dialogConfig);
-          break;
-
-        // Data persistence
-        case 'persistDataSynced':
-          result = await PluginAPI.persistDataSynced(command.key, command.data);
-          break;
-          
-        case 'loadSyncedData':
-          result = await PluginAPI.loadSyncedData(command.key);
           break;
 
         // Custom batch operations
         case 'batchOperation':
           result = await this.executeBatchOperation(command.operations);
           break;
-          
+
         default:
           throw new Error(`Unknown command action: ${command.action}`);
       }
-      
+
       const executionTime = Date.now() - startTime;
-      
+
       // Write response back to MCP server
       await this.writeCommandResponse(command.id || filename, {
         success: true,
@@ -654,38 +639,36 @@ class MCPBridgePlugin {
         executionTime: executionTime,
         timestamp: Date.now()
       });
-      
+
       // Clean up command file
       await this.deleteCommandFile(commandPath);
-      
+
       this.stats.commandsProcessed++;
       this.stats.lastCommandTime = Date.now();
-      
-      
     } catch (error) {
       await this.log(`Command failed: ${command.action} - ${error.message}`);
-      
+
       // Write error response
       await this.writeCommandResponse(command.id || filename, {
         success: false,
         error: error.message,
         timestamp: Date.now()
       });
-      
+
       // Clean up command file even on error
       await this.deleteCommandFile(commandPath);
-      
+
       this.stats.errors++;
     }
   }
 
   async executeBatchOperation(operations) {
     const results = [];
-    
+
     for (const op of operations) {
       try {
         let result;
-        
+
         switch (op.action) {
           case 'addTask':
             result = await PluginAPI.addTask(op.data);
@@ -700,14 +683,13 @@ class MCPBridgePlugin {
           default:
             throw new Error(`Unsupported batch operation: ${op.action}`);
         }
-        
+
         results.push({ success: true, result: result });
-        
       } catch (error) {
         results.push({ success: false, error: error.message });
       }
     }
-    
+
     return results;
   }
 
@@ -718,14 +700,14 @@ class MCPBridgePlugin {
 
     try {
       const result = await PluginAPI.executeNodeScript({
-      script: `
+        script: `
         const fs = require('fs');
         const path = require('path');
-        
+
         const responseDir = args[0];
         const commandId = args[1];
         const response = args[2];
-        
+
         try {
           const responseFile = path.join(responseDir, \`\${commandId}_response.json\`);
           fs.writeFileSync(responseFile, JSON.stringify(response, null, 2));
@@ -737,8 +719,6 @@ class MCPBridgePlugin {
         args: [this.config.mcpResponseDir, commandId, response],
         timeout: 5000
       });
-      
-      
     } catch (error) {
       await this.log(`Error writing command response: ${error.message}`);
     }
@@ -747,9 +727,9 @@ class MCPBridgePlugin {
   async deleteCommandFile(commandPath) {
     try {
       const result = await PluginAPI.executeNodeScript({
-      script: `
+        script: `
         const fs = require('fs');
-        
+
         try {
           fs.unlinkSync(args[0]);
           return { success: true };
@@ -760,8 +740,6 @@ class MCPBridgePlugin {
         args: [commandPath],
         timeout: 5000
       });
-      
-      
     } catch (error) {
       await this.log(`Error deleting command file: ${error.message}`);
     }
@@ -801,20 +779,20 @@ class MCPBridgePlugin {
 
   async sendEventToMCP(eventType, eventData) {
     if (!this.isInitialized || !this.config.mcpResponseDir) return;
-    
+
     try {
       const timestamp = Date.now();
       const eventFile = `${timestamp}_${eventType}_event.json`;
-      
+
       const result = await PluginAPI.executeNodeScript({
         script: `
           const fs = require('fs');
           const path = require('path');
-          
+
           const responseDir = args[0];
           const eventFile = args[1];
           const eventData = args[2];
-          
+
           try {
             const filePath = path.join(responseDir, eventFile);
             fs.writeFileSync(filePath, JSON.stringify(eventData, null, 2));
@@ -882,7 +860,7 @@ class MCPBridgePlugin {
       clearInterval(this.commandWatchInterval);
       this.commandWatchInterval = null;
     }
-    
+
     await this.log('MCP Bridge Plugin cleaned up');
   }
 
@@ -890,7 +868,7 @@ class MCPBridgePlugin {
     if (this.config.debugMode) {
       const timestamp = new Date().toISOString();
       console.log(`[${timestamp}] MCP Bridge: ${message}`);
-      
+
       // Send to UI
       this.updateUI({
         log: { message: message, type: 'info' }
