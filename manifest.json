@@ -1,20 +1,35 @@
 {
   "id": "sp-mcp-bridge",
   "name": "MCP Bridge",
-  "description": "Bridge between Super Productivity and MCP (Model Context Protocol) servers for Claude Desktop integration",
-  "version": "1.0.0",
+  "description": "Bridge between Super Productivity app and MCP (Model Context Protocol) servers for AI assistant integration.",
+  "version": "1.0.1",
   "manifestVersion": 1,
-  "author": "Super Productivity Team",
-  "homepage": "https://github.com/johannesjo/super-productivity",
-  "minSupVersion": "14.0.0",
-  "permissions": ["nodeExecution"],
+  "minSupVersion": "14.0.2",
+  "permissions": [
+    "nodeExecution",
+    "getTasks",
+    "getArchivedTasks",
+    "getCurrentContextTasks",
+    "updateTask",
+    "addTask",
+    "getAllProjects",
+    "addProject",
+    "updateProject",
+    "getAllTags",
+    "addTag",
+    "updateTag",
+    "showSnack",
+    "notify",
+    "openDialog",
+    "persistDataSynced",
+    "loadSyncedData"
+  ],
+  "nodeScriptConfig": {
+    "timeout": 30000,
+    "memoryLimit": "256MB"
+  },
   "icon": "icon.svg",
-  "categories": ["integration", "automation"],
-  "tags": ["mcp", "claude", "ai", "integration"],
   "iFrame": true,
   "isSkipMenuEntry": true,
-  "hooks": ["taskUpdate", "taskComplete", "taskDelete", "currentTaskChange"],
-  "changelog": {
-    "1.0.0": "Initial release with full MCP bridge functionality"
-  }
+  "hooks": ["taskComplete", "taskUpdate", "taskDelete", "currentTaskChange"]
 }
