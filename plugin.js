@@ -176,6 +176,8 @@ class MCPBridgePlugin {
           try {
             const fs = require('fs');
             const path = require('path');
+            // TODO: re-enable this when SP supports os import
+            // const isWindows = os.platform() === "win32";
             const isWindows = false;
 
             let dataDir;
@@ -241,12 +243,15 @@ class MCPBridgePlugin {
       const fallbackResult = await PluginAPI.executeNodeScript({
         script: `
           const path = require('path');
-          
+          // TODO: re-enable this when SP supports os import
+          // const isWindows = os.platform() === "win32";
+          const isWindows = false;
+
           let baseDir;
-          if (os.platform() === 'win32') {
-            baseDir = path.join(os.homedir(), 'AppData', 'Roaming', 'super-productivity-mcp');
+          if (isWindows) {
+            baseDir = path.join('~', 'AppData', 'Roaming', 'super-productivity-mcp');
           } else {
-            baseDir = path.join(os.homedir(), '.local', 'share', 'super-productivity-mcp');
+            baseDir = path.join('~', '.local', 'share', 'super-productivity-mcp');
           }
 
           return {
