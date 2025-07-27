@@ -22,38 +22,51 @@ class SuperProductivityMCPServer:
         self.setup_directories()
         self.setup_logging()
         self.setup_tools()
-        
+
     def setup_directories(self):
         if os.name == 'nt':  # Windows
             data_dir = os.environ.get('APPDATA', os.path.expanduser('~/AppData/Roaming'))
         else:  # Linux/Mac
             data_dir = os.environ.get('XDG_DATA_HOME', os.path.expanduser('~/.local/share'))
-        
+
         self.base_dir = Path(data_dir) / 'super-productivity-mcp'
         self.command_dir = self.base_dir / 'plugin_commands'
         self.response_dir = self.base_dir / 'plugin_responses'
-        
+
         # Create directories
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.command_dir.mkdir(parents=True, exist_ok=True)
         self.response_dir.mkdir(parents=True, exist_ok=True)
-        
-        logging.info(f"MCP Server using directory: {self.base_dir}")
-        logging.info(f"Command directory: {self.command_dir}")
-        logging.info(f"Response directory: {self.response_dir}")
-        
-        
+
+        print(f"MCP Server using directory: {self.base_dir}", file=sys.stderr)
+        print(f"Command directory: {self.command_dir}", file=sys.stderr)
+        print(f"Response directory: {self.response_dir}", file=sys.stderr)
+
+
     def setup_logging(self):
         log_file = self.base_dir / 'mcp_server.log'
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler(sys.stderr)
-            ]
-        )
-        
+        try:
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[
+                    logging.FileHandler(log_file),
+                    logging.StreamHandler(sys.stderr)
+                ],
+                force=True  # Force reconfiguration of logging
+            )
+            # Test that logging works
+            logging.info(f"Logging initialized successfully. Log file: {log_file}")
+        except Exception as e:
+            print(f"Failed to setup logging: {e}", file=sys.stderr)
+            # Fallback to basic stderr logging
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[logging.StreamHandler(sys.stderr)],
+                force=True
+            )
+
     def setup_tools(self):
         """Set up MCP tools"""
         
