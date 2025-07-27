@@ -1,0 +1,74 @@
+name: Build and Release Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make build script executable
+        run: chmod +x scripts/build-plugin.sh
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq zip bc
+
+      - name: Build plugin
+        run: bash scripts/build-plugin.sh
+
+      - name: Get plugin info
+        id: plugin_info
+        run: |
+          PLUGIN_ID=$(jq -r '.id' manifest.json)
+          PLUGIN_VERSION=$(jq -r '.version' manifest.json)
+          PLUGIN_NAME=$(jq -r '.name' manifest.json)
+          OUTPUT_FILE="${PLUGIN_ID}-v${PLUGIN_VERSION}.zip"
+          echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
+          echo "plugin_version=$PLUGIN_VERSION" >> $GITHUB_OUTPUT
+          echo "plugin_name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
+          echo "output_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ steps.plugin_info.outputs.plugin_name }} v${{ steps.plugin_info.outputs.plugin_version }}
+          body: |
+            ## ${{ steps.plugin_info.outputs.plugin_name }} v${{ steps.plugin_info.outputs.plugin_version }}
+
+            Super Productivity plugin package ready for installation.
+
+            ### Installation
+            1. Download the plugin zip file below
+            2. In Super Productivity, go to Settings > Plugins
+            3. Click "Import Plugin" and select the downloaded zip file
+            4. Enable the plugin
+
+            ### What's included
+            - Plugin code and manifest
+            - Documentation
+            - UI components
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.plugin_info.outputs.output_file }}
+          asset_name: ${{ steps.plugin_info.outputs.output_file }}
+          asset_content_type: application/zip
