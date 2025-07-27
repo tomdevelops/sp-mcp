@@ -12,11 +12,11 @@ class MCPBridgePlugin {
     // Configuration
     this.config = {
       commandCheckIntervalMs: 2000, // Check for commands every 2 seconds (configurable)
-      mcpCommandDir: null,          // Will be set during initialization  
-      mcpResponseDir: null,         // Will be set during initialization
+      mcpCommandDir: null, // Will be set during initialization
+      mcpResponseDir: null, // Will be set during initialization
       debugMode: true,
       maxConcurrentCommands: 5,
-      configFile: null              // Will be set to store settings
+      configFile: null // Will be set to store settings
     };
 
     // Statistics
@@ -43,11 +43,11 @@ class MCPBridgePlugin {
               return { success: true, config: JSON.parse(configData) };
             } else {
               // Return default config
-              return { 
-                success: true, 
-                config: { 
-                  commandCheckIntervalMs: 2000 
-                } 
+              return {
+                success: true,
+                config: {
+                  commandCheckIntervalMs: 2000
+                }
               };
             }
           } catch (error) {
@@ -113,7 +113,10 @@ class MCPBridgePlugin {
 
       this.updateUI({
         config: { pollingFrequency: frequencySeconds },
-        log: { message: `Polling updated to ${frequencySeconds}s`, type: 'info' }
+        log: {
+          message: `Polling updated to ${frequencySeconds}s`,
+          type: 'info'
+        }
       });
       return true;
     }
@@ -156,7 +159,6 @@ class MCPBridgePlugin {
           pollingFrequency: Math.floor(this.config.commandCheckIntervalMs / 1000)
         }
       });
-      
     } catch (error) {
       await this.log(`Failed to initialize: ${error.message}`);
       console.error('MCP Bridge failed:', error.message);
@@ -487,8 +489,8 @@ class MCPBridgePlugin {
         case 'removeTask':
           // Task deletion is not supported via Plugin API
           // We can only archive tasks by marking them as done and moving to archive
-          result = { 
-            success: false, 
+          result = {
+            success: false,
             error: 'Task deletion not supported. Use updateTask to mark as done instead.',
             suggestion: 'Use updateTask with {isDone: true} to complete the task'
           };
@@ -497,46 +499,60 @@ class MCPBridgePlugin {
         case 'setTaskDone':
         case 'markTaskDone':
         case 'completeTask':
-          result = await PluginAPI.updateTask(command.taskId, { isDone: true, doneOn: Date.now() });
+          result = await PluginAPI.updateTask(command.taskId, {
+            isDone: true,
+            doneOn: Date.now()
+          });
           break;
 
         case 'setTaskUndone':
         case 'markTaskUndone':
         case 'uncompleteTask':
-          result = await PluginAPI.updateTask(command.taskId, { isDone: false, doneOn: null });
+          result = await PluginAPI.updateTask(command.taskId, {
+            isDone: false,
+            doneOn: null
+          });
           break;
 
         case 'addTimeToTask':
         case 'addTimeSpent':
           // Get current task to add time to existing timeSpent
           const tasks = await PluginAPI.getTasks();
-          const task = tasks.find(t => t.id === command.taskId);
+          const task = tasks.find((t) => t.id === command.taskId);
           if (task) {
             const newTimeSpent = task.timeSpent + (command.timeMs || 0);
-            result = await PluginAPI.updateTask(command.taskId, { timeSpent: newTimeSpent });
+            result = await PluginAPI.updateTask(command.taskId, {
+              timeSpent: newTimeSpent
+            });
           } else {
             result = { error: 'Task not found' };
           }
           break;
 
         case 'setTimeEstimate':
-          result = await PluginAPI.updateTask(command.taskId, { timeEstimate: command.timeMs || 0 });
+          result = await PluginAPI.updateTask(command.taskId, {
+            timeEstimate: command.timeMs || 0
+          });
           break;
 
         case 'moveTaskToProject':
-          result = await PluginAPI.updateTask(command.taskId, { projectId: command.projectId });
+          result = await PluginAPI.updateTask(command.taskId, {
+            projectId: command.projectId
+          });
           break;
 
         case 'addTagToTask':
           // Get current task to add tag to existing tagIds
           const tasksForTag = await PluginAPI.getTasks();
-          const taskForTag = tasksForTag.find(t => t.id === command.taskId);
+          const taskForTag = tasksForTag.find((t) => t.id === command.taskId);
           if (taskForTag) {
             const newTagIds = [...taskForTag.tagIds];
             if (!newTagIds.includes(command.tagId)) {
               newTagIds.push(command.tagId);
             }
-            result = await PluginAPI.updateTask(command.taskId, { tagIds: newTagIds });
+            result = await PluginAPI.updateTask(command.taskId, {
+              tagIds: newTagIds
+            });
           } else {
             result = { error: 'Task not found' };
           }
@@ -545,8 +561,11 @@ class MCPBridgePlugin {
         case 'removeTagFromTask':
           // Get current task to remove tag from existing tagIds
           const tasksForTagRemoval = await PluginAPI.getTasks();
-          const taskForTagRemoval = tasksForTagRemoval.find(t => t.id === command.taskId);
+          const taskForTagRemoval = tasksForTagRemoval.find((t) => t.id === command.taskId);
           if (taskForTagRemoval) {
+            const newTagIds = taskForTagRemoval.tagIds.filter((id) => id !== command.tagId);
+            result = await PluginAPI.updateTask(command.taskId, {
+              tagIds: newTagIds
             });
           } else {
             result = { error: 'Task not found' };
@@ -801,16 +820,18 @@ class MCPBridgePlugin {
             return { success: false, error: error.message };
           }
         `,
-        args: [this.config.mcpResponseDir, eventFile, {
-          eventType: eventType,
-          eventData: eventData,
-          timestamp: timestamp,
-          source: 'super-productivity'
-        }],
+        args: [
+          this.config.mcpResponseDir,
+          eventFile,
+          {
+            eventType: eventType,
+            eventData: eventData,
+            timestamp: timestamp,
+            source: 'super-productivity'
+          }
+        ],
         timeout: 5000
       });
-      
-      
     } catch (error) {
       await this.log(`Failed to send event to MCP: ${error.message}`);
     }
@@ -820,14 +841,17 @@ class MCPBridgePlugin {
     // Send message to iframe UI
     if (typeof window !== 'undefined' && window.postMessage) {
       try {
-        window.postMessage({
-          type: 'mcp-bridge-update',
-          data: {
-            ...data,
-            stats: this.stats,
-            timestamp: Date.now()
-          }
-        }, '*');
+        window.postMessage(
+          {
+            type: 'mcp-bridge-update',
+            data: {
+              ...data,
+              stats: this.stats,
+              timestamp: Date.now()
+            }
+          },
+          '*'
+        );
       } catch (e) {
         // Ignore postMessage errors
       }
