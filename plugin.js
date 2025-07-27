@@ -180,6 +180,10 @@ class MCPBridgePlugin {
             // const isWindows = os.platform() === "win32";
             const isWindows = false;
 
+            // TODO: replace '~' with your absolute home directory
+            // this is a workaround for SP not supporting os module yet
+            // https://github.com/johannesjo/super-productivity/issues/4849
+
             let dataDir;
             if (isWindows) {
               dataDir = path.join('~', 'AppData', 'Roaming');
@@ -246,6 +250,10 @@ class MCPBridgePlugin {
           // TODO: re-enable this when SP supports os import
           // const isWindows = os.platform() === "win32";
           const isWindows = false;
+
+          // TODO: replace '~' with your absolute home directory
+          // this is a workaround for SP not supporting os module yet
+          // https://github.com/johannesjo/super-productivity/issues/4849
 
           let baseDir;
           if (isWindows) {
