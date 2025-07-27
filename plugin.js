@@ -176,19 +176,13 @@ class MCPBridgePlugin {
           try {
             const fs = require('fs');
             const path = require('path');
-            // TODO: re-enable this when SP supports os import
-            // const isWindows = os.platform() === "win32";
-            const isWindows = false;
-
-            // TODO: replace '~' with your absolute home directory
-            // this is a workaround for SP not supporting os module yet
-            // https://github.com/johannesjo/super-productivity/issues/4849
+            const os = require('os');
 
             let dataDir;
-            if (isWindows) {
-              dataDir = path.join('~', 'AppData', 'Roaming');
+            if (os.platform() === "win32") {
+              dataDir = path.join(os.homedir(), 'AppData', 'Roaming');
             } else {
-              dataDir = path.join('~', '.local', 'share');
+              dataDir = path.join(os.homedir(), '.local', 'share');
             }
 
             const mcpDir = path.join(dataDir, 'super-productivity-mcp');
@@ -247,19 +241,13 @@ class MCPBridgePlugin {
       const fallbackResult = await PluginAPI.executeNodeScript({
         script: `
           const path = require('path');
-          // TODO: re-enable this when SP supports os import
-          // const isWindows = os.platform() === "win32";
-          const isWindows = false;
-
-          // TODO: replace '~' with your absolute home directory
-          // this is a workaround for SP not supporting os module yet
-          // https://github.com/johannesjo/super-productivity/issues/4849
+          const os = require('os');
 
           let baseDir;
-          if (isWindows) {
-            baseDir = path.join('~', 'AppData', 'Roaming', 'super-productivity-mcp');
+          if (os.platform() === 'win32') {
+            baseDir = path.join(os.homedir(), 'AppData', 'Roaming', 'super-productivity-mcp');
           } else {
-            baseDir = path.join('~', '.local', 'share', 'super-productivity-mcp');
+            baseDir = path.join(os.homedir(), '.local', 'share', 'super-productivity-mcp');
           }
 
           return {

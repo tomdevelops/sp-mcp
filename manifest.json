@@ -4,7 +4,7 @@
   "description": "Bridge between Super Productivity app and MCP (Model Context Protocol) servers for AI assistant integration.",
   "version": "1.0.1",
   "manifestVersion": 1,
-  "minSupVersion": "14.0.2",
+  "minSupVersion": "14.2.5",
   "permissions": [
     "nodeExecution",
     "getTasks",
