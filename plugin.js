@@ -693,6 +693,7 @@ class MCPBridgePlugin {
       try {
         let result;
 
+        // TODO: add more batch operations as needed
         switch (op.action) {
           case 'addTask':
             result = await PluginAPI.addTask(op.data);
@@ -786,19 +787,17 @@ class MCPBridgePlugin {
     PluginAPI.registerHook('currentTaskChange', async (taskData) => {
       await this.sendEventToMCP('currentTaskChange', taskData);
     });
-
   }
 
   registerUI() {
     // Register menu entry only (no header button to avoid duplicates)
     PluginAPI.registerMenuEntry({
-      label: 'MCP Bridge Dashboard',
+      label: 'MCP Bridge',
       icon: 'dashboard',
       onClick: () => {
         PluginAPI.showIndexHtmlAsView();
       }
     });
-
   }
 
   async sendEventToMCP(eventType, eventData) {
